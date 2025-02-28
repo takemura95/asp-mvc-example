@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../buildMultiTargeting/clerk_asp_mvc_example.props" />
+</Project>
