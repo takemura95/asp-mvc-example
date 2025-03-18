@@ -8,7 +8,7 @@ public class ClerkAuthenticationMiddleware : IMiddleware
     {
         var options = new AuthenticateRequestOptions(
             secretKey: Environment.GetEnvironmentVariable("CLERK_SECRET_KEY"),
-            authorizedParties: ["http://localhost:5173"]
+            authorizedParties: Environment.GetEnvironmentVariable("CLERK_AUTHORIZED_PARTIES")?.Split(",")
         );
 
         var requestStateRequest = await AuthenticateRequest.AuthenticateRequestAsync(context.Request, options);

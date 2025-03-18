@@ -1,56 +1,89 @@
 # Clerk ASP.net MVC Example 
 
-This project is a 'template' that implements a basic auth middleware for Clerk.  The project should be used to see how the middleware can be used, but there are simplifying assumptions (such as an allows all CORS policy, and no HTTPS redirect) that make this project innapropriate to use in production.
+A demonstration of using Clerk JWT authentication with ASP.net MVC. This example shows how to integrate Clerk's user authentication with a ASP.net MCV backend API.
 
-## Setup
+## Configuration
 
-Install dependencies
+```bash
+$ export CLERK_API_SECRET_KEY=your_secret_key
+
+# Set authorized parties (comma-separated list of allowed origins)
+$ export CLERK_AUTHORIZED_PARTIES=http://localhost:5173
+```
+
+## Installation
+
 ```bash
 $ dotnet install
 ```
 
-Make sure the CLERK_SECRET_KEY [environment variable](https://clerk.com/docs/deployments/clerk-environment-variables#clerk-publishable-and-secret-keys) is set, ie:
 
-```bash
-export CLERK_SECRET_KEY=my_secret_key
-```
-
-## Usage
+## Running
 
 Run the server:
 ```bash
 $ dotnet Run
 ```
 
-From a Clerk frontend, use the `useSession` hook to retrieve the getToken() function:
+The server will be running at `http://localhost:5063`.
+
+## Frontend Integration
+
+From a Clerk React frontend:
 
 ```js
-const session = useSession();
-const getToken = session?.session?.getToken
-```
+import { useAuth } from '@clerk/clerk-react';
 
-Then, request the server:
+function ApiExample() {
+  const { getToken } = useAuth();
+  
+  const fetchData = async () => {
+    if (getToken) {
+      // Get the userId or null if the token is invalid
+      let res = await fetch("http://localhost:5063/Home/ClerkJWTS", {
+          headers: {
+              "Authorization": `Bearer ${await getToken()}`
+          }
+      });
+      console.log(await res.json()); // {userId: 'the_user_id_or_null'}
 
-```js
-if (getToken) {
-    // get the userId or None if the token is invalid
-    const res = await fetch("http://localhost:5063/Home/ClerkJWTS", {
-        headers: {
-            "Authorization": `Bearer ${await getToken()}`
-        }
-    })
-    console.log(await res.json()) // {userId: 'the_user_id_or_null'}
-
-    // get gated data or a 401 Unauthorized if the token is not valid
-    const res = await fetch("http://localhost:5063/Home/GatedData", {
-        headers: {
-            "Authorization": `Bearer ${await getToken()}`
-        }
-    })
-    if (res.status === 401) {
-        // token was invalid
-    } else {
-        console.log(await res.json()) // {foo: "bar"}
+      // Get gated data or a 401 Unauthorized if the token is not valid
+      res = await fetch("http://localhost:5063/Home/GatedData", {
+          headers: {
+              "Authorization": `Bearer ${await getToken()}`
+          }
+      });
+      if (res.ok) {
+          console.log(await res.json()); // {foo: "bar"}
+      } else {
+          // Token was invalid
+      }
     }
+  };
+  
+  return <button onClick={fetchData}>Fetch Data</button>;
 }
 ```
+
+## API Reference
+
+Available endpoints:
+
+    GET /Home/ClerkJWTS - Returns the authenticated user ID
+    GET /Home/GatedData - Returns protected data (requires authentication)
+
+## ⚠️ Production Warning
+
+This project is not optimized for production and does not address all best practices that should be configured in a production app. It serves as a design template and should be given appropriate consideration before being used in production.
+
+Issues to address for production use:
+- CORS configuration is specific to development environments
+- No HTTPS enforcement
+- Minimal error handling (especially 401 errors)
+- Using development server settings
+
+For production deployment:
+1. Configure proper CORS settings for your specific domains
+2. Enforce HTTPS for all API communication
+3. Implement comprehensive error handling
+4. Use a production-grade web server instead of the built-in development server
